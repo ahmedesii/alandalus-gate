@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Al-Andalus Schools — Gate Access</title>
+<style>
+  :root{
+    --navy:#10243e;
+    --navy-deep:#0a1a2e;
+    --gold:#c9a14a;
+    --sand:#f6f1e7;
+    --ok:#2f8f5b;
+    --err:#b5443a;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:
+      radial-gradient(circle at 20% 20%, rgba(201,161,74,0.08), transparent 40%),
+      radial-gradient(circle at 80% 80%, rgba(201,161,74,0.06), transparent 40%),
+      var(--navy-deep);
+    font-family:'Georgia', 'Times New Roman', serif;
+    color:var(--sand);
+    padding:24px;
+  }
+  .card{
+    width:100%;
+    max-width:420px;
+    background:var(--navy);
+    border:1px solid rgba(201,161,74,0.25);
+    border-radius:4px;
+    padding:48px 36px;
+    position:relative;
+  }
+  .card::before{
+    content:"";
+    position:absolute;
+    top:10px; left:10px; right:10px; bottom:10px;
+    border:1px solid rgba(201,161,74,0.15);
+    border-radius:2px;
+    pointer-events:none;
+  }
+  .crest{
+    width:56px; height:56px;
+    margin:0 auto 22px;
+    border:2px solid var(--gold);
+    border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    color:var(--gold);
+    font-size:24px;
+    font-weight:bold;
+  }
+  h1{
+    text-align:center;
+    font-size:22px;
+    font-weight:400;
+    letter-spacing:0.5px;
+    color:var(--sand);
+    line-height:1.4;
+  }
+  .school-name{
+    color:var(--gold);
+    display:block;
+    font-size:28px;
+    margin-bottom:4px;
+    letter-spacing:1px;
+  }
+  .dept{
+    text-align:center;
+    font-family:'Helvetica Neue', Arial, sans-serif;
+    font-size:12px;
+    letter-spacing:3px;
+    text-transform:uppercase;
+    color:rgba(246,241,231,0.55);
+    margin-top:8px;
+    margin-bottom:36px;
+  }
+  .divider{
+    width:40px; height:1px;
+    background:var(--gold);
+    margin:0 auto 36px;
+  }
+  label{
+    display:block;
+    font-family:'Helvetica Neue', Arial, sans-serif;
+    font-size:12px;
+    letter-spacing:1.5px;
+    text-transform:uppercase;
+    color:rgba(246,241,231,0.7);
+    margin-bottom:10px;
+  }
+  input[type="password"]{
+    width:100%;
+    padding:14px 16px;
+    background:rgba(246,241,231,0.05);
+    border:1px solid rgba(201,161,74,0.35);
+    border-radius:3px;
+    color:var(--sand);
+    font-family:'Helvetica Neue', Arial, sans-serif;
+    font-size:16px;
+    letter-spacing:2px;
+    outline:none;
+    transition:border-color 0.2s ease;
+  }
+  input[type="password"]:focus{
+    border-color:var(--gold);
+  }
+  input[type="password"]::placeholder{
+    color:rgba(246,241,231,0.25);
+    letter-spacing:normal;
+  }
+  button{
+    width:100%;
+    margin-top:24px;
+    padding:16px;
+    background:var(--gold);
+    color:var(--navy-deep);
+    border:none;
+    border-radius:3px;
+    font-family:'Helvetica Neue', Arial, sans-serif;
+    font-size:14px;
+    font-weight:700;
+    letter-spacing:2px;
+    text-transform:uppercase;
+    cursor:pointer;
+    transition:filter 0.15s ease, transform 0.05s ease;
+  }
+  button:hover{ filter:brightness(1.08); }
+  button:active{ transform:scale(0.98); }
+  button:disabled{
+    opacity:0.6;
+    cursor:not-allowed;
+  }
+  .status{
+    margin-top:20px;
+    min-height:20px;
+    text-align:center;
+    font-family:'Helvetica Neue', Arial, sans-serif;
+    font-size:13px;
+    letter-spacing:0.5px;
+  }
+  .status.ok{ color:var(--ok); }
+  .status.err{ color:var(--err); }
+  .status.pending{ color:rgba(246,241,231,0.6); }
+  .footer-note{
+    margin-top:32px;
+    text-align:center;
+    font-family:'Helvetica Neue', Arial, sans-serif;
+    font-size:11px;
+    color:rgba(246,241,231,0.3);
+    letter-spacing:0.5px;
+  }
+  @media (prefers-reduced-motion: reduce){
+    *{ transition:none !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="card">
+  <div class="crest">A</div>
+  <h1><span class="school-name">Al-Andalus Schools</span>Welcome</h1>
+  <p class="dept">Maintenance Department — Gate Control</p>
+  <div class="divider"></div>
+
+  <form id="gateForm">
+    <label for="pw">Access Code</label>
+    <input type="password" id="pw" placeholder="Enter code" autocomplete="off" inputmode="numeric">
+    <button type="submit" id="openBtn">Open Gate</button>
+    <div class="status" id="status"></div>
+  </form>
+
+  <p class="footer-note">For maintenance use only. Report issues to school administration.</p>
+</div>
+
+<script>
+const form = document.getElementById('gateForm');
+const statusEl = document.getElementById('status');
+const btn = document.getElementById('openBtn');
+const pwInput = document.getElementById('pw');
+
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const code = pwInput.value.trim();
+  if(!code){
+    statusEl.textContent = 'Enter the access code.';
+    statusEl.className = 'status err';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Opening...';
+  statusEl.textContent = 'Sending request...';
+  statusEl.className = 'status pending';
+
+  try{
+    const res = await fetch('/api/open-gate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code })
+    });
+    const data = await res.json();
+
+    if(res.ok && data.success){
+      statusEl.textContent = 'Gate opened successfully.';
+      statusEl.className = 'status ok';
+    } else {
+      statusEl.textContent = data.message || 'Incorrect code. Try again.';
+      statusEl.className = 'status err';
+    }
+  } catch(err){
+    statusEl.textContent = 'Connection error. Try again.';
+    statusEl.className = 'status err';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Open Gate';
+  }
+});
+</script>
+
+</body>
+</html>

@@ -1,25 +1,20 @@
 // /api/open-gate.js
-// Vercel serverless function — talks to Tuya Cloud API on the server side.
-// Secrets (CLIENT_ID, CLIENT_SECRET) stay here, never sent to the browser.
-
+// Verifies the saved login token, then talks to Tuya Cloud API server-side.
 const crypto = require('crypto');
+const { verifyToken } = require('./_auth');
 
-// ====== CONFIG (read from Vercel Environment Variables) ======
 const CLIENT_ID = process.env.TUYA_CLIENT_ID;
 const CLIENT_SECRET = process.env.TUYA_CLIENT_SECRET;
 const DEVICE_ID = process.env.TUYA_DEVICE_ID;
-const ACCESS_CODE = process.env.GATE_ACCESS_CODE; // shared password for students
 const BASE_URL = 'https://openapi.tuyaeu.com'; // Central Europe data center
 
 function hmacSha256(message, secret) {
   return crypto.createHmac('sha256', secret).update(message, 'utf8').digest('hex').toUpperCase();
 }
-
 function sha256(message) {
   return crypto.createHash('sha256').update(message, 'utf8').digest('hex');
 }
 
-// Step 1: get a Tuya access token
 async function getToken() {
   const t = Date.now().toString();
   const method = 'GET';
@@ -39,20 +34,15 @@ async function getToken() {
     },
   });
   const data = await res.json();
-  if (!data.success) {
-    throw new Error('Failed to get Tuya token: ' + JSON.stringify(data));
-  }
+  if (!data.success) throw new Error('Failed to get Tuya token: ' + JSON.stringify(data));
   return data.result.access_token;
 }
 
-// Step 2: send command to open the gate (turn relay ON)
 async function openGate(accessToken) {
   const t = Date.now().toString();
   const method = 'POST';
   const path = `/v1.0/devices/${DEVICE_ID}/commands`;
-  const body = JSON.stringify({
-    commands: [{ code: 'switch_1', value: true }],
-  });
+  const body = JSON.stringify({ commands: [{ code: 'switch_1', value: true }] });
   const contentHash = sha256(body);
   const stringToSign = [method, contentHash, '', path].join('\n');
   const signStr = CLIENT_ID + accessToken + t + stringToSign;
@@ -80,15 +70,16 @@ module.exports = async (req, res) => {
   }
 
   try {
-    const { code } = req.body || {};
+    const { token } = req.body || {};
+    const phone = token ? verifyToken(token) : null;
 
-    if (!code || code !== ACCESS_CODE) {
-      res.status(401).json({ success: false, message: 'Incorrect code. Try again.' });
+    if (!phone) {
+      res.status(401).json({ success: false, message: 'Please log in again.' });
       return;
     }
 
-    const token = await getToken();
-    const result = await openGate(token);
+    const accessToken = await getToken();
+    const result = await openGate(accessToken);
 
     if (result.success) {
       res.status(200).json({ success: true, message: 'Gate opened.' });

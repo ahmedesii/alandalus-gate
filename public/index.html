@@ -77,13 +77,35 @@
     text-transform:uppercase;
     color:rgba(246,241,231,0.55);
     margin-top:8px;
-    margin-bottom:36px;
+    margin-bottom:32px;
   }
   .divider{
     width:40px; height:1px;
     background:var(--gold);
-    margin:0 auto 36px;
+    margin:0 auto 32px;
   }
+  .tabs{
+    display:flex;
+    margin-bottom:28px;
+    border-bottom:1px solid rgba(201,161,74,0.25);
+  }
+  .tab{
+    flex:1;
+    text-align:center;
+    padding:10px 0 14px;
+    font-family:'Helvetica Neue', Arial, sans-serif;
+    font-size:13px;
+    letter-spacing:1.5px;
+    text-transform:uppercase;
+    color:rgba(246,241,231,0.45);
+    cursor:pointer;
+    border-bottom:2px solid transparent;
+    margin-bottom:-1px;
+    transition:color 0.2s ease, border-color 0.2s ease;
+  }
+  .tab.active{ color:var(--gold); border-bottom-color:var(--gold); }
+  .panel{ display:none; }
+  .panel.active{ display:block; }
   label{
     display:block;
     font-family:'Helvetica Neue', Arial, sans-serif;
@@ -91,9 +113,11 @@
     letter-spacing:1.5px;
     text-transform:uppercase;
     color:rgba(246,241,231,0.7);
-    margin-bottom:10px;
+    margin-bottom:8px;
+    margin-top:18px;
   }
-  input[type="password"]{
+  label:first-of-type{ margin-top:0; }
+  input{
     width:100%;
     padding:14px 16px;
     background:rgba(246,241,231,0.05);
@@ -102,20 +126,15 @@
     color:var(--sand);
     font-family:'Helvetica Neue', Arial, sans-serif;
     font-size:16px;
-    letter-spacing:2px;
+    letter-spacing:0.5px;
     outline:none;
     transition:border-color 0.2s ease;
   }
-  input[type="password"]:focus{
-    border-color:var(--gold);
-  }
-  input[type="password"]::placeholder{
-    color:rgba(246,241,231,0.25);
-    letter-spacing:normal;
-  }
+  input:focus{ border-color:var(--gold); }
+  input::placeholder{ color:rgba(246,241,231,0.25); }
   button{
     width:100%;
-    margin-top:24px;
+    margin-top:26px;
     padding:16px;
     background:var(--gold);
     color:var(--navy-deep);
@@ -131,12 +150,15 @@
   }
   button:hover{ filter:brightness(1.08); }
   button:active{ transform:scale(0.98); }
-  button:disabled{
-    opacity:0.6;
-    cursor:not-allowed;
+  button:disabled{ opacity:0.6; cursor:not-allowed; }
+  button.secondary{
+    background:transparent;
+    border:1px solid rgba(201,161,74,0.4);
+    color:var(--gold);
+    margin-top:12px;
   }
   .status{
-    margin-top:20px;
+    margin-top:18px;
     min-height:20px;
     text-align:center;
     font-family:'Helvetica Neue', Arial, sans-serif;
@@ -147,16 +169,45 @@
   .status.err{ color:var(--err); }
   .status.pending{ color:rgba(246,241,231,0.6); }
   .footer-note{
-    margin-top:32px;
+    margin-top:28px;
     text-align:center;
     font-family:'Helvetica Neue', Arial, sans-serif;
     font-size:11px;
     color:rgba(246,241,231,0.3);
     letter-spacing:0.5px;
   }
-  @media (prefers-reduced-motion: reduce){
-    *{ transition:none !important; }
+  .hidden{ display:none !important; }
+
+  .gate-view{ text-align:center; }
+  .welcome-text{
+    font-family:'Helvetica Neue', Arial, sans-serif;
+    font-size:13px;
+    color:rgba(246,241,231,0.6);
+    margin-bottom:28px;
+    letter-spacing:0.5px;
   }
+  .link-row{
+    margin-top:22px;
+    display:flex;
+    justify-content:center;
+    gap:18px;
+    font-family:'Helvetica Neue', Arial, sans-serif;
+    font-size:12px;
+  }
+  .link-row span{
+    color:rgba(246,241,231,0.4);
+    text-decoration:underline;
+    cursor:pointer;
+    letter-spacing:0.5px;
+  }
+  .loading-screen{
+    text-align:center;
+    font-family:'Helvetica Neue', Arial, sans-serif;
+    font-size:13px;
+    color:rgba(246,241,231,0.4);
+    padding:20px 0;
+  }
+  @media (prefers-reduced-motion: reduce){ *{ transition:none !important; } }
 </style>
 </head>
 <body>
@@ -164,33 +215,209 @@
 <div class="card">
   <div class="crest">A</div>
   <h1><span class="school-name">Al-Andalus Schools</span>Welcome</h1>
-  <p class="dept">Maintenance Department — Gate Control</p>
+  <p class="dept">Facility Management — Gate Control</p>
   <div class="divider"></div>
 
-  <form id="gateForm">
-    <label for="pw">Access Code</label>
-    <input type="password" id="pw" placeholder="Enter code" autocomplete="off" inputmode="numeric">
-    <button type="submit" id="openBtn">Open Gate</button>
-    <div class="status" id="status"></div>
-  </form>
+  <div class="loading-screen" id="loadingScreen">Loading...</div>
+
+  <div id="authSection" class="hidden">
+    <div class="tabs">
+      <div class="tab active" data-tab="login">Log In</div>
+      <div class="tab" data-tab="signup">Sign Up</div>
+    </div>
+
+    <div class="panel active" id="loginPanel">
+      <form id="loginForm">
+        <label for="loginPhone">Phone Number</label>
+        <input type="tel" id="loginPhone" placeholder="01XXXXXXXXX" autocomplete="username" required>
+        <label for="loginPass">Password</label>
+        <input type="password" id="loginPass" placeholder="Password" autocomplete="current-password" required>
+        <button type="submit" id="loginBtn">Log In</button>
+        <div class="status" id="loginStatus"></div>
+      </form>
+    </div>
+
+    <div class="panel" id="signupPanel">
+      <form id="signupForm">
+        <label for="signupPhone">Phone Number</label>
+        <input type="tel" id="signupPhone" placeholder="01XXXXXXXXX" autocomplete="username" required>
+        <label for="signupPass">Choose a Password</label>
+        <input type="password" id="signupPass" placeholder="At least 4 characters" autocomplete="new-password" required minlength="4">
+        <button type="submit" id="signupBtn">Create Account</button>
+        <div class="status" id="signupStatus"></div>
+      </form>
+    </div>
+  </div>
+
+  <div class="gate-view hidden" id="gateView">
+    <p class="welcome-text" id="welcomeText"></p>
+    <button type="button" id="openBtn">Open Gate</button>
+    <div class="status" id="gateStatus"></div>
+    <div class="link-row">
+      <span id="changePassLink">Forgot / change password</span>
+      <span id="logoutLink">Not you? Log out</span>
+    </div>
+  </div>
+
+  <div class="gate-view hidden" id="changePassView">
+    <form id="changePassForm">
+      <label for="resetPhone">Your Phone Number</label>
+      <input type="tel" id="resetPhone" placeholder="01XXXXXXXXX" autocomplete="username" required>
+      <label for="newPass">New Password</label>
+      <input type="password" id="newPass" placeholder="At least 4 characters" autocomplete="new-password" required minlength="4">
+      <button type="submit" id="changePassBtn">Set New Password</button>
+      <button type="button" class="secondary" id="cancelChangePass">Back</button>
+      <div class="status" id="changePassStatus"></div>
+    </form>
+  </div>
 
   <p class="footer-note">For maintenance use only. Report issues to school administration.</p>
 </div>
 
 <script>
-const form = document.getElementById('gateForm');
-const statusEl = document.getElementById('status');
-const btn = document.getElementById('openBtn');
-const pwInput = document.getElementById('pw');
+const loadingScreen = document.getElementById('loadingScreen');
+const authSection = document.getElementById('authSection');
+const gateView = document.getElementById('gateView');
+const changePassView = document.getElementById('changePassView');
+const welcomeText = document.getElementById('welcomeText');
 
-form.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const code = pwInput.value.trim();
-  if(!code){
-    statusEl.textContent = 'Enter the access code.';
-    statusEl.className = 'status err';
-    return;
+const SESSION_KEY = 'alandalus_session_token';
+
+function setCookie(name, value, days){
+  const d = new Date();
+  d.setTime(d.getTime() + days*24*60*60*1000);
+  document.cookie = `${name}=${value};expires=${d.toUTCString()};path=/;SameSite=Lax`;
+}
+function getCookie(name){
+  const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+  return match ? match[2] : null;
+}
+function deleteCookie(name){
+  document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/;`;
+}
+
+let currentPhone = null;
+
+function showAuth(){
+  loadingScreen.classList.add('hidden');
+  authSection.classList.remove('hidden');
+  gateView.classList.add('hidden');
+  changePassView.classList.add('hidden');
+}
+function showGate(phone){
+  currentPhone = phone;
+  loadingScreen.classList.add('hidden');
+  authSection.classList.add('hidden');
+  gateView.classList.remove('hidden');
+  changePassView.classList.add('hidden');
+  welcomeText.textContent = 'Signed in as ' + phone;
+}
+function showChangePass(){
+  gateView.classList.add('hidden');
+  changePassView.classList.remove('hidden');
+}
+
+(async function init(){
+  const token = getCookie(SESSION_KEY);
+  if(!token){ showAuth(); return; }
+
+  try{
+    const res = await fetch('/api/verify-session', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ token })
+    });
+    const data = await res.json();
+    if(res.ok && data.success){
+      showGate(data.phone);
+    } else {
+      deleteCookie(SESSION_KEY);
+      showAuth();
+    }
+  } catch{
+    showAuth();
   }
+})();
+
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById(tab.dataset.tab + 'Panel').classList.add('active');
+  });
+});
+
+document.getElementById('signupForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const phone = document.getElementById('signupPhone').value.trim();
+  const password = document.getElementById('signupPass').value;
+  const statusEl = document.getElementById('signupStatus');
+  const btn = document.getElementById('signupBtn');
+
+  btn.disabled = true;
+  statusEl.textContent = 'Creating account...';
+  statusEl.className = 'status pending';
+
+  try{
+    const res = await fetch('/api/signup', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ phone, password })
+    });
+    const data = await res.json();
+    if(res.ok && data.success){
+      setCookie(SESSION_KEY, data.token, 365);
+      showGate(phone);
+    } else {
+      statusEl.textContent = data.message || 'Could not create account.';
+      statusEl.className = 'status err';
+    }
+  } catch{
+    statusEl.textContent = 'Connection error. Try again.';
+    statusEl.className = 'status err';
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+document.getElementById('loginForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const phone = document.getElementById('loginPhone').value.trim();
+  const password = document.getElementById('loginPass').value;
+  const statusEl = document.getElementById('loginStatus');
+  const btn = document.getElementById('loginBtn');
+
+  btn.disabled = true;
+  statusEl.textContent = 'Logging in...';
+  statusEl.className = 'status pending';
+
+  try{
+    const res = await fetch('/api/login', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ phone, password })
+    });
+    const data = await res.json();
+    if(res.ok && data.success){
+      setCookie(SESSION_KEY, data.token, 365);
+      showGate(phone);
+    } else {
+      statusEl.textContent = data.message || 'Incorrect phone or password.';
+      statusEl.className = 'status err';
+    }
+  } catch{
+    statusEl.textContent = 'Connection error. Try again.';
+    statusEl.className = 'status err';
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+document.getElementById('openBtn').addEventListener('click', async () => {
+  const btn = document.getElementById('openBtn');
+  const statusEl = document.getElementById('gateStatus');
+  const token = getCookie(SESSION_KEY);
 
   btn.disabled = true;
   btn.textContent = 'Opening...';
@@ -199,25 +426,80 @@ form.addEventListener('submit', async (e) => {
 
   try{
     const res = await fetch('/api/open-gate', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ code })
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ token })
     });
     const data = await res.json();
-
     if(res.ok && data.success){
       statusEl.textContent = 'Gate opened successfully.';
       statusEl.className = 'status ok';
     } else {
-      statusEl.textContent = data.message || 'Incorrect code. Try again.';
+      statusEl.textContent = data.message || 'Could not open the gate.';
       statusEl.className = 'status err';
     }
-  } catch(err){
+  } catch{
     statusEl.textContent = 'Connection error. Try again.';
     statusEl.className = 'status err';
   } finally {
     btn.disabled = false;
     btn.textContent = 'Open Gate';
+  }
+});
+
+document.getElementById('logoutLink').addEventListener('click', () => {
+  deleteCookie(SESSION_KEY);
+  document.getElementById('loginForm').reset();
+  showAuth();
+});
+
+document.getElementById('changePassLink').addEventListener('click', showChangePass);
+document.getElementById('cancelChangePass').addEventListener('click', () => {
+  document.getElementById('changePassForm').reset();
+  document.getElementById('changePassStatus').textContent = '';
+  gateView.classList.remove('hidden');
+  changePassView.classList.add('hidden');
+});
+
+document.getElementById('changePassForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const phone = document.getElementById('resetPhone').value.trim();
+  const newPassword = document.getElementById('newPass').value;
+  const statusEl = document.getElementById('changePassStatus');
+  const btn = document.getElementById('changePassBtn');
+
+  btn.disabled = true;
+  statusEl.textContent = 'Updating...';
+  statusEl.className = 'status pending';
+
+  try{
+    const res = await fetch('/api/change-password', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ phone, newPassword })
+    });
+    const data = await res.json();
+    if(res.ok && data.success){
+      statusEl.textContent = 'Password updated. You can log in now.';
+      statusEl.className = 'status ok';
+      document.getElementById('changePassForm').reset();
+      setTimeout(() => {
+        // go to login tab
+        deleteCookie(SESSION_KEY);
+        showAuth();
+        document.querySelector('.tab[data-tab="login"]').click();
+        document.getElementById('resetPhone') && (document.getElementById('loginPhone').value = phone);
+        statusEl.textContent = '';
+      }, 1500);
+    } else {
+      statusEl.textContent = data.message || 'Could not update password.';
+      statusEl.className = 'status err';
+    }
+  } catch{
+    statusEl.textContent = 'Connection error. Try again.';
+    statusEl.className = 'status err';
+  } finally {
+    btn.disabled = false;
   }
 });
 </script>

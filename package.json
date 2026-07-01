@@ -1,5 +1,8 @@
 {
   "name": "alandalus-gate",
-  "version": "1.0.0",
-  "private": true
+  "version": "2.0.0",
+  "private": true,
+  "dependencies": {
+    "@vercel/postgres": "^0.10.0"
+  }
 }
